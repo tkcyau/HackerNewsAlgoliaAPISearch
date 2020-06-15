@@ -32,6 +32,9 @@ function App({
       .then((data) => {
         setLoading(false);
         addSearchResults(data.hits);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
   };
 
