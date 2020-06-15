@@ -1,25 +1,55 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import "./App.css";
-import { addSearchQuery, addSearchResults } from "./redux/actions";
+import {
+  addSearchQuery,
+  addSearchResults,
+  changeSortBy,
+} from "./redux/actions";
 
-function App({ searchQuery, searchResults, addSearchQuery, addSearchResults }) {
+function App({
+  searchQuery,
+  searchResults,
+  addSearchQuery,
+  addSearchResults,
+  sortBy,
+  changeSortBy,
+}) {
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchResults();
+  }, [sortBy]);
 
   const handleChange = (event) => {
     const { value } = event.target;
     addSearchQuery(value);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setLoading(true);
-    fetch(`https://hn.algolia.com/api/v1/search?query=${searchQuery}`)
+  const fetchAndAdd = (url) => {
+    fetch(`${url}${searchQuery}&tags=story`)
       .then((response) => response.json())
       .then((data) => {
         setLoading(false);
         addSearchResults(data.hits);
       });
+  };
+
+  const fetchResults = () => {
+    if (searchQuery === "") {
+      addSearchResults([]);
+    } else if (sortBy === "relevance") {
+      setLoading(true);
+      fetchAndAdd("http://hn.algolia.com/api/v1/search?query=");
+    } else {
+      setLoading(true);
+      fetchAndAdd("http://hn.algolia.com/api/v1/search_by_date?query=");
+    }
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    fetchResults();
   };
 
   return (
@@ -34,7 +64,18 @@ function App({ searchQuery, searchResults, addSearchQuery, addSearchResults }) {
           value={searchQuery}
           placeholder="Search"
         />
+
         <button type="submit">Go!</button>
+        <label htmlFor="sort">Sort By:</label>
+        <select
+          value={sortBy}
+          onChange={(e) => changeSortBy(e.target.value)}
+          name="sort"
+          id="sort"
+        >
+          <option value="relevance">By relevance</option>
+          <option value="date">By date (more recent first)</option>
+        </select>
       </form>
       <ol>
         {loading
@@ -51,15 +92,17 @@ function App({ searchQuery, searchResults, addSearchQuery, addSearchResults }) {
   );
 }
 
-const mapStateToProps = (state) => ({
-  searchQuery: state.searchQuery,
-  searchResults: state.searchResults,
+const mapStateToProps = ({ searchQuery, searchResults, sortBy }) => ({
+  searchQuery,
+  searchResults,
+  sortBy,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   addSearchQuery: (searchQuery) => dispatch(addSearchQuery(searchQuery)),
   addSearchResults: (searchResults) =>
     dispatch(addSearchResults(searchResults)),
+  changeSortBy: (sortByValue) => dispatch(changeSortBy(sortByValue)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);
