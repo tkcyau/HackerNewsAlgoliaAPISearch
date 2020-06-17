@@ -83,13 +83,15 @@ function App({
       <ol>
         {loading
           ? "Loading..."
-          : searchResults.map(({ objectID, url, created_at, title }) => (
-              <li key={objectID}>
-                <a href={`${url}`}>
-                  {created_at.split("T")[0]}—{title}
-                </a>
-              </li>
-            ))}
+          : searchResults
+              .filter((result) => result.url)
+              .map(({ objectID, url, created_at, title }) => (
+                <li key={objectID}>
+                  <a href={`${url}`}>
+                    {created_at.split("T")[0]}—{title}
+                  </a>
+                </li>
+              ))}
       </ol>
     </div>
   );
